@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
+import logging
 import os
+import pprint
 import sys
 import argparse
 import mimetypes
@@ -27,18 +29,21 @@ def parse_args():
 
 # override text/plain as otherwise it returns .ksh
 MIME_TYPE_SUFFIXES = {
+    'application_x-vnd.oasis.opendocument.spreadsheet': '.ods',
     'text/plain': '.txt',
 }
 
 def commit_revision(gd, opts, rev, basename='content'):
     # Prepare environment variables to change commit time
     env = os.environ.copy()
-    env['GIT_COMMITTER_DATE'] = rev['modifiedDate']
-    env['GIT_AUTHOR_DATE'] = rev['modifiedDate']
-    env['GIT_COMMITTER_NAME'] = rev['lastModifyingUserName']
-    env['GIT_AUTHOR_NAME'] = rev['lastModifyingUserName']
-    env['GIT_COMMITTER_EMAIL'] = rev['lastModifyingUser']['emailAddress']
-    env['GIT_AUTHOR_EMAIL'] = rev['lastModifyingUser']['emailAddress']
+    date = rev['modifiedDate']
+    user = rev.get('lastModifyingUserName', None)
+    email = rev.get('lastModifyingUser', {}).get('emailAddress', None)
+    if user is None or email is None:
+        logging.warning("Could not determine user from revision info:\n%s", pprint.pformat(rev))
+    env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = date
+    env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME'] = user or 'Unknown User'
+    env['GIT_COMMITTER_EMAIL'] = env['GIT_AUTHOR_EMAIL'] = email or 'unknown'
 
     mime_types = rev['exportLinks'].keys() if opts.all_types else opts.mime_type
     for mime_type in mime_types:
@@ -62,7 +67,7 @@ def commit_revision(gd, opts, rev, basename='content'):
 
         # Commit changes to repository.
         subprocess.call(['git', 'add', filename])
-    subprocess.call(['git', 'commit', '-m', 'revision from %s' % rev['modifiedDate']], env=env)
+    subprocess.call(['git', 'commit', '-m', 'revision from %s' % date], env=env)
 
 
 def main():
