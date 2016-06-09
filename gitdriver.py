@@ -34,17 +34,21 @@ MIME_TYPE_SUFFIXES = {
     'text/plain': '.txt',
 }
 
-def commit_revision(gd, opts, rev, basename='content'):
+def commit_revision(gd, opts, rev, md):
     # Prepare environment variables to change commit time
     env = os.environ.copy()
     date = rev['modifiedDate']
+    basename = md.get('title', 'content')
+    owner_users = [owner.get('displayName', None) for owner in md.get('owners', [])]
+    owner_emails = [owner.get('emailAddress', None) for owner in md.get('owners', [])]
     user = rev.get('lastModifyingUserName', None)
     email = rev.get('lastModifyingUser', {}).get('emailAddress', None)
+    if user is None or email is None and not (owner_users or owner_emails):
     if user is None or email is None:
         logging.warning("Could not determine user from revision info:\n%s", pprint.pformat(rev))
     env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = date
-    env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME'] = user or 'Unknown User'
-    env['GIT_COMMITTER_EMAIL'] = env['GIT_AUTHOR_EMAIL'] = email or 'unknown'
+    env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME'] = user or ' '.join(owner_users) or 'Unknown User'
+    env['GIT_COMMITTER_EMAIL'] = env['GIT_AUTHOR_EMAIL'] = email or ' '.join(owner_emails) or 'unknown'
 
     mime_types = rev['exportLinks'].keys() if opts.all_types else opts.mime_types
     for mime_type in mime_types:
@@ -102,8 +106,8 @@ def main():
         for rev in gd.revisions(opts.docid):            
             if revision_matched:
                 print "New revision: " + rev['modifiedDate']
-                commit_revision(gd, opts, rev, md['title'])
-            if rev['modifiedDate'] in last_commit_message:
+                commit_revision(gd, opts, rev, md)
+            if rev['modifedDate'] in last_commit_message:
                 print "Found matching revision: " + rev['modifiedDate']
                 revision_matched = True
         print "Repository is up to date."
@@ -115,7 +119,7 @@ def main():
 
         # Iterate over the revisions (from oldest to newest).
         for rev in gd.revisions(opts.docid):
-            commit_revision(gd, opts, rev, md['title'])
+            commit_revision(gd, opts, rev, md)
 if __name__ == '__main__':
     main()
 
