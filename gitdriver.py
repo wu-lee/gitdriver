@@ -44,8 +44,8 @@ def commit_revision(gd, opts, rev):
     env['GIT_AUTHOR_DATE'] = rev['modifiedDate']
     env['GIT_COMMITTER_NAME'] = rev['lastModifyingUserName']
     env['GIT_AUTHOR_NAME'] = rev['lastModifyingUserName']
-    env['GIT_COMMITTER_EMAIL'] = rev['lastModifyingUserName']
-    env['GIT_AUTHOR_EMAIL'] = rev['lastModifyingUserName']
+    env['GIT_COMMITTER_EMAIL'] = rev['lastModifyingUser']['emailAddress']
+    env['GIT_AUTHOR_EMAIL'] = rev['lastModifyingUser']['emailAddress']
 
     # Commit changes to repository.
     subprocess.call(['git', 'add', 'content'])
