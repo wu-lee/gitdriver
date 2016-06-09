@@ -30,7 +30,7 @@ def parse_args():
 
 # override text/plain as otherwise it returns .ksh
 MIME_TYPE_SUFFIXES = {
-    'application_x-vnd.oasis.opendocument.spreadsheet': '.ods',
+    'application/x-vnd.oasis.opendocument.spreadsheet': '.ods',
     'text/plain': '.txt',
 }
 
@@ -43,8 +43,7 @@ def commit_revision(gd, opts, rev, md):
     owner_emails = [owner.get('emailAddress', None) for owner in md.get('owners', [])]
     user = rev.get('lastModifyingUserName', None)
     email = rev.get('lastModifyingUser', {}).get('emailAddress', None)
-    if user is None or email is None and not (owner_users or owner_emails):
-    if user is None or email is None:
+    if (user is None and not owner_users) or (email is None and not owner_emails):
         logging.warning("Could not determine user from revision info:\n%s", pprint.pformat(rev))
     env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = date
     env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME'] = user or ' '.join(owner_users) or 'Unknown User'
@@ -55,7 +54,9 @@ def commit_revision(gd, opts, rev, md):
         if mime_type in opts.exclude_types:
             continue
         filename_suffix = MIME_TYPE_SUFFIXES.get(mime_type, mimetypes.guess_extension(mime_type, False))
-        filename_suffix = filename_suffix or ".%s" % mime_type.replace('/', '_')
+        if not filename_suffix:
+            logging.warning("Could not determine extension for mime_type %s", mime_type)
+            filename_suffix = ".%s" % mime_type.replace('/', '_')
         filename = '%s%s' % (basename, filename_suffix)
         with open(filename, 'w') as fd:
             if 'exportLinks' in rev and not opts.raw:
