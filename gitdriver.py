@@ -31,6 +31,15 @@ MIME_TYPE_SUFFIXES = {
 }
 
 def commit_revision(gd, opts, rev, basename='content'):
+    # Prepare environment variables to change commit time
+    env = os.environ.copy()
+    env['GIT_COMMITTER_DATE'] = rev['modifiedDate']
+    env['GIT_AUTHOR_DATE'] = rev['modifiedDate']
+    env['GIT_COMMITTER_NAME'] = rev['lastModifyingUserName']
+    env['GIT_AUTHOR_NAME'] = rev['lastModifyingUserName']
+    env['GIT_COMMITTER_EMAIL'] = rev['lastModifyingUser']['emailAddress']
+    env['GIT_AUTHOR_EMAIL'] = rev['lastModifyingUser']['emailAddress']
+
     mime_types = rev['exportLinks'].keys() if opts.all_types else opts.mime_type
     for mime_type in mime_types:
         filename_suffix = MIME_TYPE_SUFFIXES.get(mime_type, mimetypes.guess_extension(mime_type, False))
@@ -50,15 +59,6 @@ def commit_revision(gd, opts, rev, basename='content'):
             # Write file content into local file.
             for chunk in r.iter_content():
                 fd.write(chunk)
-
-        # Prepare environment variables to change commit time
-        env = os.environ.copy()
-        env['GIT_COMMITTER_DATE'] = rev['modifiedDate']
-        env['GIT_AUTHOR_DATE'] = rev['modifiedDate']
-        env['GIT_COMMITTER_NAME'] = rev['lastModifyingUserName']
-        env['GIT_AUTHOR_NAME'] = rev['lastModifyingUserName']
-        env['GIT_COMMITTER_EMAIL'] = rev['lastModifyingUser']['emailAddress']
-        env['GIT_AUTHOR_EMAIL'] = rev['lastModifyingUser']['emailAddress']
 
         # Commit changes to repository.
         subprocess.call(['git', 'add', filename])
