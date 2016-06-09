@@ -18,9 +18,10 @@ def parse_args():
             dest='mime_type')
     p.add_argument('--html', '-H', action='append_const', const='text/html',
             dest='mime_type')
-    p.add_argument('--mime-type', action='append', dest='mime_type', default=[])
+    p.add_argument('--mime-type', action='append', dest='mime_types', default=[])
     p.add_argument('--all-types', action='store_true',
             help='Export all available mime types')
+    p.add_argument('--exclude-type', action='append', dest='exclude_types', default=[])
     p.add_argument('--raw', '-R', action='store_true',
             help='Download original document if possible.')
     p.add_argument('docid')
@@ -45,8 +46,10 @@ def commit_revision(gd, opts, rev, basename='content'):
     env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME'] = user or 'Unknown User'
     env['GIT_COMMITTER_EMAIL'] = env['GIT_AUTHOR_EMAIL'] = email or 'unknown'
 
-    mime_types = rev['exportLinks'].keys() if opts.all_types else opts.mime_type
+    mime_types = rev['exportLinks'].keys() if opts.all_types else opts.mime_types
     for mime_type in mime_types:
+        if mime_type in opts.exclude_types:
+            continue
         filename_suffix = MIME_TYPE_SUFFIXES.get(mime_type, mimetypes.guess_extension(mime_type, False))
         filename_suffix = filename_suffix or ".%s" % mime_type.replace('/', '_')
         filename = '%s%s' % (basename, filename_suffix)
@@ -72,7 +75,7 @@ def commit_revision(gd, opts, rev, basename='content'):
 
 def main():
     opts = parse_args()
-    if not opts.mime_type and not opts.all_types:
+    if not opts.mime_types and not opts.all_types:
 		print "At least one mime-type must be given!"
 		exit(1)
     cfg = yaml.load(open(opts.config))
