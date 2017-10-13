@@ -62,8 +62,8 @@ def export_gdrive_file(gd, src_file, target_folder, opts):
     # get full metadata from server
     md = gd.get_file_metadata(docid)
     basename = md['title'].replace('/', '_')
-    print 'Update document "%(title)s"' % md
     revisions = list(gd.revisions(docid))
+    print 'Update document "%s" - %d revisions' % (md['title'], len(revisions))
     target_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename, revisions[-1], opts)]
     if True in [os.path.exists(f) for f in target_files]:
         last_commit_message = subprocess.check_output(['git', 'log', '-n', '1', '--format=%B'] + target_files)
@@ -71,9 +71,9 @@ def export_gdrive_file(gd, src_file, target_folder, opts):
         revision_matched = False
     else:
         revision_matched = True
-    for rev in revisions:
+    for n, rev in enumerate(revisions):
         if revision_matched:
-            print "New revision: " + rev['modifiedDate']
+            print "New revision: " + rev['modifiedDate'] + " (%d/%d)" % (n+1, len(revisions))
             commit_revision(gd, opts, rev, md, target_folder)
         elif rev['modifiedDate'] in last_commit_message:
             print "Found matching revision: " + rev['modifiedDate']
