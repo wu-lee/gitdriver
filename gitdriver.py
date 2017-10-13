@@ -31,6 +31,7 @@ def parse_args():
 # override text/plain as otherwise it returns .ksh
 MIME_TYPE_SUFFIXES = {
     'application/x-vnd.oasis.opendocument.spreadsheet': '.ods',
+    'application/epub+zip': '.epub',
     'text/plain': '.txt',
 }
 
