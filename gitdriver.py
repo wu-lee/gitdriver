@@ -35,7 +35,7 @@ MIME_TYPE_SUFFIXES = {
     'text/plain': '.txt',
 }
 
-def commit_revision(gd, opts, rev, md):
+def commit_revision(gd, opts, rev, md, target_dir=None):
     # Prepare environment variables to change commit time
     env = os.environ.copy()
     date = rev['modifiedDate']
@@ -59,6 +59,8 @@ def commit_revision(gd, opts, rev, md):
             logging.warning("Could not determine extension for mime_type %s", mime_type)
             filename_suffix = ".%s" % mime_type.replace('/', '_')
         filename = '%s%s' % (basename, filename_suffix)
+        if target_dir is not None:
+            filename = os.path.join(target_dir, filename)
         with open(filename, 'w') as fd:
             if 'exportLinks' in rev and not opts.raw:
                 # If the file provides an 'exportLinks' dictionary,
