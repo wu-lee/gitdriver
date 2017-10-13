@@ -39,7 +39,7 @@ def commit_revision(gd, opts, rev, md):
     # Prepare environment variables to change commit time
     env = os.environ.copy()
     date = rev['modifiedDate']
-    basename = md.get('title', 'content')
+    basename = md.get('title', 'content').replace('/', '_')
     owner_users = [owner.get('displayName', None) for owner in md.get('owners', [])]
     owner_emails = [owner.get('emailAddress', None) for owner in md.get('owners', [])]
     user = rev.get('lastModifyingUserName', None)
