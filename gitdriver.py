@@ -84,8 +84,8 @@ def commit_revision(gd, opts, rev, md, target_dir=None):
 def main():
     opts = parse_args()
     if not opts.mime_types and not opts.all_types:
-		print "At least one mime-type must be given!"
-		exit(1)
+        print "At least one mime-type must be given!"
+        exit(1)
     cfg = yaml.load(open(opts.config))
     gd = GoogleDrive(
             client_id=cfg['googledrive']['client id'],
@@ -107,7 +107,7 @@ def main():
         last_commit_message = subprocess.check_output('git log -n 1 --format=%B', shell=True)
         print 'Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:'
         revision_matched = False
-        for rev in gd.revisions(opts.docid):            
+        for rev in gd.revisions(opts.docid):
             if revision_matched:
                 print "New revision: " + rev['modifiedDate']
                 commit_revision(gd, opts, rev, md)
@@ -124,6 +124,7 @@ def main():
         # Iterate over the revisions (from oldest to newest).
         for rev in gd.revisions(opts.docid):
             commit_revision(gd, opts, rev, md)
+
 if __name__ == '__main__':
     main()
 
