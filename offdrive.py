@@ -38,10 +38,16 @@ def main():
         if not os.path.exists(target_folder):
             os.mkdir(target_folder)
         gdrive_files = [f for f in filenames if os.path.splitext(f)[1][1:] in GDRIVE_EXTS]
+        extensions_present = {}
+        for filename in gdrive_files:
+            name, extension = os.path.splitext(filename)
+            extensions_present.setdefault(name, []).append(extension[1:])
         other_files = [f for f in filenames if f not in gdrive_files]
         for filename in gdrive_files:
+            name, extension = os.path.splitext(filename)
+            type_suffix = extension if len(extensions_present[name]) > 1 else ''
             print("Exporting %s/%s" % (rel_folder, filename))
-            export_gdrive_file(gd, os.path.join(src_folder, filename), target_folder, opts)
+            export_gdrive_file(gd, os.path.join(src_folder, filename), target_folder, opts, type_suffix)
 
 def get_target_filenames(basename, rev, opts):
     mime_types = rev['exportLinks'].keys() if opts.all_types else opts.mime_types
@@ -55,16 +61,20 @@ def get_target_filenames(basename, rev, opts):
         filename = '%s%s' % (basename, filename_suffix)
         yield filename
 
-def export_gdrive_file(gd, src_file, target_folder, opts):
+def export_gdrive_file(gd, src_file, target_folder, opts, type_suffix=''):
     with open(src_file) as s:
         md = json.load(s)
     docid = md['doc_id']
     # get full metadata from server
     md = gd.get_file_metadata(docid)
-    basename = md['title'].replace('/', '_')
+    basename = md['title'].replace('/', '_') + type_suffix
     revisions = list(gd.revisions(docid))
-    print 'Update document "%s" - %d revisions' % (md['title'], len(revisions))
+    print 'Update document "%s" - %d revisions' % (md['title'] + type_suffix, len(revisions))
     target_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename, revisions[-1], opts)]
+    if type_suffix:
+        untyped_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename[:-len(type_suffix)], revisions[-1], opts)]
+        if len(untyped_files) > 1:
+            raise ValueError("Document %s in %s requires a type suffix but existing revisions didn't have it; fix manually" % (basename, target_folder))
     if True in [os.path.exists(f) for f in target_files]:
         last_commit_message = subprocess.check_output(['git', 'log', '-n', '1', '--format=%B'] + target_files)
         print 'Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:'
@@ -74,7 +84,7 @@ def export_gdrive_file(gd, src_file, target_folder, opts):
     for n, rev in enumerate(revisions):
         if revision_matched:
             print "New revision: " + rev['modifiedDate'] + " (%d/%d)" % (n+1, len(revisions))
-            commit_revision(gd, opts, rev, md, target_folder)
+            commit_revision(gd, opts, rev, md, target_folder, type_suffix)
         elif rev['modifiedDate'] in last_commit_message:
             print "Found matching revision: " + rev['modifiedDate']
             revision_matched = True
