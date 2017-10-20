@@ -72,7 +72,8 @@ def export_gdrive_file(gd, src_file, target_folder, opts, type_suffix=''):
     print 'Update document "%s" - %d revisions' % (md['title'] + type_suffix, len(revisions))
     target_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename, revisions[-1], opts)]
     if type_suffix:
-        untyped_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename[:-len(type_suffix)], revisions[-1], opts)]
+        untyped_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename[:-len(type_suffix)], revisions[-1], opts) if f.replace(basename, '').count('.') == 1]
+        untyped_files = [f for f in untyped_files if os.path.exists(f)]
         if len(untyped_files) > 1:
             raise ValueError("Document %s in %s requires a type suffix but existing revisions didn't have it; fix manually" % (basename, target_folder))
     if True in [os.path.exists(f) for f in target_files]:
