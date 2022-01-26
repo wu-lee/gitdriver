@@ -10,7 +10,7 @@ import requests
 
 OAUTH_URI='https://accounts.google.com/o/oauth2'
 VALIDATE_URI='https://www.googleapis.com/oauth2/v1/tokeninfo'
-DRIVE_URI='https://www.googleapis.com/drive/v2'
+DRIVE_URI='https://www.googleapis.com/drive/v3'
 
 OAUTH_SCOPES = [
       'https://www.googleapis.com/auth/userinfo.email',
@@ -163,10 +163,12 @@ class GoogleDrive(object):
         '''Return an iterator over the revisions of a file
         identified by its ID.'''
 
-        r = self.session.get('%s/files/%s/revisions' % (
-            DRIVE_URI, fid)).json()
-
-        for rev in r['items']:
+        r = self.session.get(
+            '%s/files/%s/revisions' % ( DRIVE_URI, fid),
+            params = {'fields': '*'}
+        ).json()
+        
+        for rev in r['revisions']:
             yield rev
 
 if __name__ == '__main__':

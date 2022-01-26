@@ -42,9 +42,10 @@ def main():
     md = gd.get_file_metadata(opts.docid)
 
     # Initialize the git repository.
-    print('Create repository "%(title)s"' % md)
-    subprocess.call(['git','init',md['title']])
-    os.chdir(md['title'])
+    doc_title = md['name']
+    print('Create repository "%s"' % doc_title)
+    subprocess.call(['git','init',doc_title])
+    os.chdir(doc_title)
 
     # Iterate over the revisions (from oldest to newest).
     for rev in gd.revisions(opts.docid):
@@ -67,7 +68,7 @@ def main():
         # Documentation on "git commit": https://git-scm.com/docs/git-commit
         modified_user_name = rev['lastModifyingUser']['displayName']
         modified_user_email = rev['lastModifyingUser']['emailAddress']
-        modified_timestamp = rev['modifiedDate']
+        modified_timestamp = rev['modifiedTime']
         author_param = "--author=\"%s <%s>\"" %(modified_user_name, modified_user_email)
         date_param = "--date=\"%s\"" %modified_timestamp
         commit_message = 'Revision from %s' %modified_timestamp
