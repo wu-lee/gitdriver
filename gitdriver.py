@@ -64,9 +64,15 @@ def main():
                 fd.write(chunk)
 
         # Commit changes to repository.
+        # Documentation on "git commit": https://git-scm.com/docs/git-commit
+        modified_user_name = rev['lastModifyingUser']['displayName']
+        modified_user_email = rev['lastModifyingUser']['emailAddress']
+        modified_timestamp = rev['modifiedDate']
+        author_param = "--author=\"%s <%s>\"" %(modified_user_name, modified_user_email)
+        date_param = "--date=\"%s\"" %modified_timestamp
+        commit_message = 'Revision from %s' %modified_timestamp
         subprocess.call(['git', 'add', 'content'])
-        subprocess.call(['git', 'commit', '-m',
-            'revision from %s' % rev['modifiedDate']])
+        subprocess.call(['git', 'commit', '-m', commit_message, author_param, date_param])
 
 if __name__ == '__main__':
     main()
