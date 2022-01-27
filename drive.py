@@ -163,13 +163,30 @@ class GoogleDrive(object):
         '''Return an iterator over the revisions of a file
         identified by its ID.'''
 
-        r = self.session.get(
-            '%s/files/%s/revisions' % ( DRIVE_URI, fid),
-            params = {'fields': '*'}
-        ).json()
-        
-        for rev in r['revisions']:
-            yield rev
+        fetch_next_page = True
+        next_page_token = ''
+        while fetch_next_page:
+            # Default pageSize is 200.
+            # Using a lower value here to (hopefully) prevent a known API bug
+            # leading to trimmed revision history:
+            # > https://issuetracker.google.com/issues/70101398
+            # > https://stackoverflow.com/questions/57368392/google-drive-api-getting-list-of-revisions
+            c_params = {'pageSize': 50, 'fields': '*'}
+            if next_page_token != '':
+                c_params['pageToken'] = next_page_token
+            r = self.session.get(
+                '%s/files/%s/revisions' % ( DRIVE_URI, fid),
+                params = c_params
+            ).json()
+
+            fetch_next_page = 'nextPageToken' in r
+            print(">>> Fetched %d revisions (more to fetch: %s)" %(len(r['revisions']), fetch_next_page))
+
+            for rev in r['revisions']:
+                yield rev
+
+            if fetch_next_page:
+                next_page_token = r['nextPageToken']
 
 if __name__ == '__main__':
     cfg = yaml.load(open('gd.conf'))
