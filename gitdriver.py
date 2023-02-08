@@ -38,17 +38,15 @@ MIME_TYPE_SUFFIXES = {
 def commit_revision(gd, opts, rev, md, target_dir=None, type_suffix=''):
     # Prepare environment variables to change commit time
     env = os.environ.copy()
-    date = rev['modifiedDate']
+    date = rev['modifiedTime']
     basename = md.get('title', 'content').replace('/', '_') + type_suffix
-    owner_users = [owner.get('displayName', None) for owner in md.get('owners', [])]
-    owner_emails = [owner.get('emailAddress', None) for owner in md.get('owners', [])]
-    user = rev.get('lastModifyingUserName', None)
+    user = rev.get('lastModifyingUser', {}).get('displayName', None)
     email = rev.get('lastModifyingUser', {}).get('emailAddress', None)
-    if (user is None and not owner_users) or (email is None and not owner_emails):
+    if (user is None) or (email is None):
         logging.warning("Could not determine user from revision info:\n%s", pprint.pformat(rev))
     env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = date
-    env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME'] = user or ' '.join(owner_users) or 'Unknown User'
-    env['GIT_COMMITTER_EMAIL'] = env['GIT_AUTHOR_EMAIL'] = email or ' '.join(owner_emails) or 'unknown'
+    env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME'] = user or 'Unknown User'
+    env['GIT_COMMITTER_EMAIL'] = env['GIT_AUTHOR_EMAIL'] = email or 'unknown'
 
     mime_types = rev['exportLinks'].keys() if opts.all_types else opts.mime_types
     for mime_type in mime_types:
@@ -100,30 +98,32 @@ def main():
     # an exception if the file does not exist.
     md = gd.get_file_metadata(opts.docid)
 
-    if os.path.isdir(md['title']):
+    doc_title = md['name']
+    if os.path.isdir(doc_title):
         # Find revision matching last commit and process only following revisions
-        os.chdir(md['title'])
-        print('Update repository "%(title)s"' % md)
+        os.chdir(doc_title)
+        print('Update repository "%s"' % doc_title)
         last_commit_message = subprocess.check_output('git log -n 1 --format=%B', shell=True, encoding='utf-8')
         print('Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:')
         revision_matched = False
         for rev in gd.revisions(opts.docid):
             if revision_matched:
-                print("New revision: " + rev['modifiedDate'])
+                print("New revision: " + rev['modifiedTime'])
                 commit_revision(gd, opts, rev, md)
-            if rev['modifiedDate'] in last_commit_message:
-                print("Found matching revision: " + rev['modifiedDate'])
+            if rev['modifiedTime'] in last_commit_message:
+                print("Found matching revision: " + rev['modifiedTime'])
                 revision_matched = True
         print("Repository is up to date.")
     else:
         # Initialize the git repository.
-        print('Create repository "%(title)s"' % md)
-        subprocess.call(['git','init',md['title']])
-        os.chdir(md['title'])
+        print('Create repository "%s"' % doc_title)
+        subprocess.call(['git','init',doc_title])
+        os.chdir(doc_title)
 
         # Iterate over the revisions (from oldest to newest).
         for rev in gd.revisions(opts.docid):
             commit_revision(gd, opts, rev, md)
+
 
 if __name__ == '__main__':
     main()
