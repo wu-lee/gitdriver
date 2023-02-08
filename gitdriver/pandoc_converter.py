@@ -1,6 +1,7 @@
 import json
 import pandoc
-from pandocfilters import toJSONFilter, applyJSONFilters, Span, Header
+from urllib.parse import urlparse, parse_qs
+from pandocfilters import applyJSONFilters, toJSONFilter, Span, Header, Link
 
 def convert(input_filename, output_extension):
     output_filename = input_filename[:input_filename.rindex('.')] + '.' + output_extension
@@ -21,6 +22,17 @@ def filter_attr(key, value, format, meta):
         return Header(value[0] + 1, ['','',''], value[2])
     if key == 'Span':
         return Span(['','',''], value[1])
+    if key == 'Link':
+        url = value[2][0]
+        # Google Drive hides all the URLs as 'https://www.google.com/url?q=' and appends random tracking things
+        u = urlparse(url)
+        query = parse_qs(u.query, keep_blank_values=True)
+        if 'q' in query:
+            real_url = query['q'][0]
+        else:
+            # links to comments or other relative links
+            real_url = url
+        return Link(['','',''], value[1], [real_url, ''])
   
 if __name__ == '__main__':
     toJSONFilter(filter_attr)
