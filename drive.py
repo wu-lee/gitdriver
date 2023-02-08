@@ -130,7 +130,7 @@ class GoogleDrive(object):
         '''Read credentials from file.'''
         try:
             with open(self.credentials) as fd:
-                self.token = yaml.load(fd)
+                self.token = yaml.safe_load(fd)
         except IOError:
             pass
 
@@ -170,7 +170,7 @@ class GoogleDrive(object):
             yield rev
 
 if __name__ == '__main__':
-    cfg = yaml.load(open('gd.conf'))
+    cfg = yaml.safe_load(open('gd.conf'))
     gd = GoogleDrive(
             client_id=cfg['googledrive']['client id'],
             client_secret=cfg['googledrive']['client secret'],

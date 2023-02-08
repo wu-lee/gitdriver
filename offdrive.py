@@ -21,9 +21,9 @@ GDRIVE_EXTS = {'gdoc', 'gmap', 'gsheet', 'gslides'}
 def main():
     opts = parse_args()
     if not opts.mime_types and not opts.all_types:
-        print "At least one mime-type must be given!"
+        print("At least one mime-type must be given!")
         exit(1)
-    cfg = yaml.load(open(opts.config))
+    cfg = yaml.safe_load(open(opts.config))
     gd = GoogleDrive(
             client_id=cfg['googledrive']['client id'],
             client_secret=cfg['googledrive']['client secret'],
@@ -69,7 +69,7 @@ def export_gdrive_file(gd, src_file, target_folder, opts, type_suffix=''):
     md = gd.get_file_metadata(docid)
     basename = md['title'].replace('/', '_') + type_suffix
     revisions = list(gd.revisions(docid))
-    print 'Update document "%s" - %d revisions' % (md['title'] + type_suffix, len(revisions))
+    print('Update document "%s" - %d revisions' % (md['title'] + type_suffix, len(revisions)))
     target_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename, revisions[-1], opts)]
     if type_suffix:
         untyped_files = [os.path.join(target_folder, f) for f in get_target_filenames(basename[:-len(type_suffix)], revisions[-1], opts) if f.replace(basename, '').count('.') == 1]
@@ -78,18 +78,18 @@ def export_gdrive_file(gd, src_file, target_folder, opts, type_suffix=''):
             raise ValueError("Document %s in %s requires a type suffix but existing revisions didn't have it; fix manually" % (basename, target_folder))
     if True in [os.path.exists(f) for f in target_files]:
         last_commit_message = subprocess.check_output(['git', 'log', '-n', '1', '--format=%B'] + target_files)
-        print 'Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:'
+        print('Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:')
         revision_matched = False
     else:
         revision_matched = True
     for n, rev in enumerate(revisions):
         if revision_matched:
-            print "New revision: " + rev['modifiedDate'] + " (%d/%d)" % (n+1, len(revisions))
+            print("New revision: " + rev['modifiedDate'] + " (%d/%d)" % (n+1, len(revisions)))
             commit_revision(gd, opts, rev, md, target_folder, type_suffix)
         elif rev['modifiedDate'] in last_commit_message:
-            print "Found matching revision: " + rev['modifiedDate']
+            print("Found matching revision: " + rev['modifiedDate'])
             revision_matched = True
-    print "Repository is up to date."
+    print("Repository is up to date.")
 
 if __name__ == '__main__':
     main()

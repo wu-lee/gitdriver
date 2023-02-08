@@ -61,7 +61,7 @@ def commit_revision(gd, opts, rev, md, target_dir=None, type_suffix=''):
         filename = '%s%s' % (basename, filename_suffix)
         if target_dir is not None:
             filename = os.path.join(target_dir, filename)
-        with open(filename, 'w') as fd:
+        with open(filename, 'wb') as fd:
             if 'exportLinks' in rev and not opts.raw:
                 # If the file provides an 'exportLinks' dictionary,
                 # download the requested MIME type.
@@ -86,7 +86,7 @@ def main():
     if not opts.mime_types and not opts.all_types:
         print("At least one mime-type must be given!")
         exit(1)
-    cfg = yaml.load(open(opts.config))
+    cfg = yaml.safe_load(open(opts.config))
     gd = GoogleDrive(
             client_id=cfg['googledrive']['client id'],
             client_secret=cfg['googledrive']['client secret'],
