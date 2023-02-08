@@ -23,7 +23,7 @@ def parse_args():
             help='Export all available mime types')
     p.add_argument('--exclude-type', action='append', dest='exclude_types', default=[])
     p.add_argument('--raw', '-R', action='store_true',
-            help='Download original document if possible.')
+        help='Download original document if possible.')
     p.add_argument('docid')
 
     return p.parse_args()
@@ -84,7 +84,7 @@ def commit_revision(gd, opts, rev, md, target_dir=None, type_suffix=''):
 def main():
     opts = parse_args()
     if not opts.mime_types and not opts.all_types:
-        print "At least one mime-type must be given!"
+        print("At least one mime-type must be given!")
         exit(1)
     cfg = yaml.load(open(opts.config))
     gd = GoogleDrive(
@@ -103,21 +103,21 @@ def main():
     if os.path.isdir(md['title']):
         # Find revision matching last commit and process only following revisions
         os.chdir(md['title'])
-        print 'Update repository "%(title)s"' % md
+        print('Update repository "%(title)s"' % md)
         last_commit_message = subprocess.check_output('git log -n 1 --format=%B', shell=True)
-        print 'Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:'
+        print('Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:')
         revision_matched = False
         for rev in gd.revisions(opts.docid):
             if revision_matched:
-                print "New revision: " + rev['modifiedDate']
+                print("New revision: " + rev['modifiedDate'])
                 commit_revision(gd, opts, rev, md)
             if rev['modifedDate'] in last_commit_message:
-                print "Found matching revision: " + rev['modifiedDate']
+                print("Found matching revision: " + rev['modifiedDate'])
                 revision_matched = True
-        print "Repository is up to date."
+        print("Repository is up to date.")
     else:
         # Initialize the git repository.
-        print 'Create repository "%(title)s"' % md
+        print('Create repository "%(title)s"' % md)
         subprocess.call(['git','init',md['title']])
         os.chdir(md['title'])
 
