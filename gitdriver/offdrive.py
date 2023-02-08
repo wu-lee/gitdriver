@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from gitdriver import *
+from .gitdriver import *
 import json
 
 def parse_args():

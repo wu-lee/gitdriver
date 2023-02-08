@@ -9,24 +9,8 @@ import mimetypes
 import subprocess
 import yaml
 
-from drive import GoogleDrive, DRIVE_RW_SCOPE
 
-def parse_args():
-    p = argparse.ArgumentParser()
-    p.add_argument('--config', '-f', default='gd.conf')
-    p.add_argument('--text', '-T', action='append_const', const='text/plain',
-            dest='mime_type')
-    p.add_argument('--html', '-H', action='append_const', const='text/html',
-            dest='mime_type')
-    p.add_argument('--mime-type', action='append', dest='mime_types', default=[])
-    p.add_argument('--all-types', action='store_true',
-            help='Export all available mime types')
-    p.add_argument('--exclude-type', action='append', dest='exclude_types', default=[])
-    p.add_argument('--raw', '-R', action='store_true',
-        help='Download original document if possible.')
-    p.add_argument('docid')
-
-    return p.parse_args()
+from .drive import GoogleDrive, DRIVE_RW_SCOPE
 
 # override text/plain as otherwise it returns .ksh
 MIME_TYPE_SUFFIXES = {
@@ -39,7 +23,7 @@ def commit_revision(gd, opts, rev, md, target_dir=None, type_suffix=''):
     # Prepare environment variables to change commit time
     env = os.environ.copy()
     date = rev['modifiedTime']
-    basename = md.get('title', 'content').replace('/', '_') + type_suffix
+    basename = md.get('name', 'content').replace('/', '_') + type_suffix
     user = rev.get('lastModifyingUser', {}).get('displayName', None)
     email = rev.get('lastModifyingUser', {}).get('emailAddress', None)
     if (user is None) or (email is None):
@@ -79,10 +63,9 @@ def commit_revision(gd, opts, rev, md, target_dir=None, type_suffix=''):
     subprocess.call(['git', 'commit', '-m', 'revision from %s' % date], env=env)
 
 
-def main():
-    opts = parse_args()
+def main(opts):
     if not opts.mime_types and not opts.all_types:
-        print("At least one mime-type must be given!")
+        print("At least one mime-type must be given! Alternatively, use one between -T, -H or --all-types")
         exit(1)
     cfg = yaml.safe_load(open(opts.config))
     gd = GoogleDrive(
@@ -124,7 +107,4 @@ def main():
         for rev in gd.revisions(opts.docid):
             commit_revision(gd, opts, rev, md)
 
-
-if __name__ == '__main__':
-    main()
 
