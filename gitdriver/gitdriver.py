@@ -8,8 +8,9 @@ import argparse
 import mimetypes
 import subprocess
 import yaml
+import pandoc
 
-
+from . import pandoc_converter
 from .drive import GoogleDrive, DRIVE_RW_SCOPE
 
 # override text/plain as otherwise it returns .ksh
@@ -58,9 +59,20 @@ def commit_revision(gd, opts, rev, md, target_dir=None, type_suffix=''):
             for chunk in r.iter_content():
                 fd.write(chunk)
 
-        # Commit changes to repository.
-        subprocess.call(['git', 'add', filename])
+        # add changes to repository.
+        if not opts.markdown:
+            subprocess.call(['git', 'add', filename])
+    # check if it needs to be converted
+    if opts.markdown:
+        # convert the file
+        converted_filename = pandoc_converter.convert(filename, 'md')
+        # add changes to repository.
+        subprocess.call(['git', 'add', converted_filename])
+    # committing the changes
     subprocess.call(['git', 'commit', '-m', 'revision from %s' % date], env=env)
+
+
+
 
 
 def main(opts):

@@ -2,3 +2,5 @@ PyYAML
 requests
 wheel
 typer
+pandoc
+pandocfilters
