@@ -104,14 +104,14 @@ def main():
         # Find revision matching last commit and process only following revisions
         os.chdir(md['title'])
         print('Update repository "%(title)s"' % md)
-        last_commit_message = subprocess.check_output('git log -n 1 --format=%B', shell=True)
+        last_commit_message = subprocess.check_output('git log -n 1 --format=%B', shell=True, encoding='utf-8')
         print('Last commit: ' + last_commit_message + 'Iterating Google Drive revisions:')
         revision_matched = False
         for rev in gd.revisions(opts.docid):
             if revision_matched:
                 print("New revision: " + rev['modifiedDate'])
                 commit_revision(gd, opts, rev, md)
-            if rev['modifedDate'] in last_commit_message:
+            if rev['modifiedDate'] in last_commit_message:
                 print("Found matching revision: " + rev['modifiedDate'])
                 revision_matched = True
         print("Repository is up to date.")
