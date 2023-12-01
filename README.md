@@ -54,3 +54,10 @@ Where `YOUR_CLIENT_ID` and `YOUR_CLIENT_SECRET` are replaced with the
 appropriate values from Google that you established in the previous
 step.
 
+## Prerequisites
+
+Besides the Python Google API libraries (see the quickstart guide
+above), if you are using the `-M` option, you will also need the
+`pandoc` executable available and on CLI execution path.
+
+On Debian/Ubuntu, this is available by installing the `pandoc` package.
